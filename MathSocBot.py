@@ -7,13 +7,14 @@ from decouple import config
 from mathChallenges import *
 import time
 
-client = commands.Bot(command_prefix = '+', help_command=None)
+client = commands.Bot(command_prefix = '+', help_command = None)
 TOKEN = config('TOKEN')
 DRIVER = config('DRIVER')
 EMOJI_CHALLENGE = ['\U00002705', '\U0001F17E'] # white_check_mark, o2
 
 CHALLENGES = Challenges()
 
+# CLIENT LOAD
 @client.event
 async def on_ready():
     general_channel = client.get_channel(847222513980276788)
@@ -24,6 +25,11 @@ async def on_ready():
     )
     await general_channel.send(embed = mbed)
 
+@client.command(pass_context=True) 
+async def level(ctx):
+    user = ctx.author
+
+# BATTLE ANOTHER USER COMMAND
 @client.command(pass_context=True)
 async def battle(ctx):
     user = ctx.author
@@ -41,23 +47,47 @@ async def battle(ctx):
     for emoji in EMOJI_CHALLENGE:
         await message.add_reaction(emoji)
 
+# DAILY QUEST COMMAND
 @client.command(pass_context=True)
 async def quest(ctx):
     user = ctx.author
     mbed = discord.Embed (
-        description = user.mention + ' Here is your daily quest...',
+        description = 'Here is your daily quest...',
         color = 10181046
     )
     mbed.set_author(name=str(user).split('#')[0] + ' is claiming their daily quest!', icon_url=user.avatar_url)
     message = await ctx.send(embed = mbed)
-    time.sleep(1.5)
+    time.sleep(3) # pause 3 seconds
     problem = CHALLENGES.getChallenge()
-    mbed.description = user.mention + ' Here is your daily quest...\n\n' + problem[0]
-    if len(problem) == 2:
-        mbed.set_image(url=problem[1])
+    mbed.description = 'Here is your daily quest...\n\n' + problem[0]
+    mbed.set_image(url=problem[1])
     await message.edit(embed = mbed)
-    
 
+# CHALLENGE PROBLEMS COMMAND
+def displayChallenge(ctx, message):
+    user = ctx.author
+    mbed = discord.Embed (
+        description = 'Presenting a ' + str(message) + ' problem for the math-hungry you...',
+        color = 10181046
+    )
+    mbed.set_author(name=str(user).split('#')[0] + ' is seeking for a challenge!', icon_url=user.avatar_url)
+    return mbed
+
+def editChallengeEmbed(problem, mbed):
+    mbed.description = problem[0]
+    mbed.set_image(url=problem[1])
+    return mbed
+
+@client.command(pass_context=True)
+async def challenge(ctx):
+    message = ctx.message.content.split(' ')
+    mbed = displayChallenge(ctx, message[1])
+    message = await ctx.send(embed = mbed)
+    time.sleep(1) # pause 3 seconds
+    mbed = editChallengeEmbed(CHALLENGES.getChallenge(message[1]), mbed)
+    await message.edit(embed = mbed)
+
+# HELP COMMAND
 @client.command(pass_context=True)
 async def help(ctx):
     mbed = discord.Embed (
