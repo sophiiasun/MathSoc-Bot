@@ -25,14 +25,56 @@ async def on_ready():
     )
     await general_channel.send(embed = mbed)
 
+# CHECK USER XP LEVEL COMMAND
 @client.command(pass_context=True) 
 async def level(ctx):
     user = ctx.author
 
+
+def checkUserExist(user):
+    with pyodbc.connect(DRIVER) as conn:
+        with conn.cursor() as cursor:
+            cnt = cursor.execute("select count(*) as cnt from mathData where username = '" + user + "'").fetchone().cnt
+            if cnt == 0:  # user exists, update
+                cursor.execute("insert into vibeScores (username, xpLevel, xpCount, activityStatus) Values ('" + user + \
+                    ", 0, 0, 'nothing'" + "');")
+                cursor.commit() 
+                return False
+            return True
+
+def userNotExistEmbed(user):
+    mbed = discord.Embed (
+        description = 'Please register with the bot before using it. To do this, use the command `+register`.'
+    )
+
+@client.command(pass_context=True)
+async def register(ctx):
+    user = ctx.author
+    mbed = discord.Embed (
+        description = '**Below are the terms and agreements for MathSoc Bot:**\n\n \
+            —> I will not spam commands that I will not use.\n \
+            —> I will not purposely try commands that do not exist. Please see `+help` for a list of commands.\n \
+            —> I will be respectful to everyone in this server, including the bot (no roasting, creator-san will be sad :3).\n\n\
+            **Please take note of:**\n\
+            —> This bot is unprofessionally made so there are probably bugs, please use `+'
+    )
+
 # DAILY QUEST COMMAND
+def questStoreAnswer(user, answer):
+    with pyodbc.connect(DRIVER) as conn:
+        with conn.cursor() as cursor:
+            cnt = cursor.execute("select count(*) as cnt from mathData where username = '" + str(user) + "'").fetchone().cnt
+            if cnt > 0:  # user exists, update
+                cursor.execute("update mathData set answer = '" + str(answer) + "' where username = '" + str(user) + "'")
+            else:
+                cursor.execute("insert into vibeScores (username, recent, average, vibeCount) Values ('" + str(name) + "', '" + str(score) + "', '" + str(score) + "', '1');")
+            cursor.commit()
+
 @client.command(pass_context=True)
 async def quest(ctx):
     user = ctx.author
+    if not checkUserExist(user.name):
+        userNotExistEmbed(user)
     mbed = discord.Embed (
         description = 'Here is your daily quest...',
         color = 10181046
