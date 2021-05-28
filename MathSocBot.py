@@ -29,24 +29,6 @@ async def on_ready():
 async def level(ctx):
     user = ctx.author
 
-# BATTLE ANOTHER USER COMMAND
-@client.command(pass_context=True)
-async def battle(ctx):
-    user = ctx.author
-    message = ctx.message
-    others = message.mentions
-    mbed = discord.Embed (
-        description = others[0].mention + ' Click :white_check_mark: to accept and :o2: to decline. \
-            \n \n Competitors will compete in five rounds to see who can respond with the correct answer\
-            in the shortest amount of time. Best out of three. Winner will receive the **ultimate** bragging\
-            rights. Are YOU up for the battle?', # display user stats
-        color = 1752220 # AQUA
-    )
-    mbed.set_author(name=str(user).split('#')[0] + ' challenges ' + str(others[0]).split('#')[0] + ' to a math battle!', icon_url=user.avatar_url)
-    message = await ctx.send(embed = mbed)
-    for emoji in EMOJI_CHALLENGE:
-        await message.add_reaction(emoji)
-
 # DAILY QUEST COMMAND
 @client.command(pass_context=True)
 async def quest(ctx):
@@ -55,7 +37,7 @@ async def quest(ctx):
         description = 'Here is your daily quest...',
         color = 10181046
     )
-    mbed.set_author(name=str(user).split('#')[0] + ' is claiming their daily quest!', icon_url=user.avatar_url)
+    mbed.set_author(name=user.name + ' is claiming their daily quest!', icon_url=user.avatar_url)
     message = await ctx.send(embed = mbed)
     time.sleep(3) # pause 3 seconds
     problem = CHALLENGES.getChallenge()
@@ -70,7 +52,7 @@ def displayChallenge(ctx, message):
         description = 'Presenting a ' + str(message) + ' problem for the math-hungry you...',
         color = 10181046
     )
-    mbed.set_author(name=str(user).split('#')[0] + ' is seeking for a challenge!', icon_url=user.avatar_url)
+    mbed.set_author(name=user.name + ' is seeking for a challenge!', icon_url=user.avatar_url)
     return mbed
 
 def editChallengeEmbed(problem, mbed):
@@ -80,11 +62,12 @@ def editChallengeEmbed(problem, mbed):
 
 @client.command(pass_context=True)
 async def challenge(ctx):
-    message = ctx.message.content.split(' ')
-    mbed = displayChallenge(ctx, message[1])
+    # check if there is still pending 
+    messageUser = ctx.message.content.split(' ')
+    mbed = displayChallenge(ctx, messageUser[1])
     message = await ctx.send(embed = mbed)
     time.sleep(1) # pause 3 seconds
-    mbed = editChallengeEmbed(CHALLENGES.getChallenge(message[1]), mbed)
+    mbed = editChallengeEmbed(CHALLENGES.getChallenge(messageUser[1]), mbed)
     await message.edit(embed = mbed)
 
 # HELP COMMAND
@@ -101,22 +84,68 @@ async def help(ctx):
     mbed.add_field(name='XP Level: `+level`', value='Check your level of mathematical expertise. Earn `xp` by doing math activities with the bot.', inline=False)
     await ctx.send(embed = mbed)
 
-def acceptBattle(user, other):
+# BATTLE ANOTHER USER COMMAND
+def acceptBattle(user, author, msg):
     mbed = discord.Embed (
-        description = str(other).split('#')[0] + ' has accepted the battle! Let the matches begin!'
+        description = user.name + ' has accepted the battle! Let the matches begin! Best three out of five rounds.',
+        color = 15844367 # GOLD
     )
+    mbed.set_author(name=author.name + ' challenges ' + user.name + ' to a math battle!', icon_url=author.avatar_url)
+    return mbed
 
 @client.event
 async def on_reaction_add(reaction, user):
     message = reaction.message
     channel = message.channel
+    author = message.author
     if user.bot:
         return
+    if reaction.emoji == '\U00002705': # white_check_mark
+        await message.edit(embed = acceptBattle(user, author))
 
-    await message.channel.send(reaction)
-    # if reaction.emoji == '\U00002705': # white_check_mark
-    #     await message.edit(embed=)
-    
+@client.command(pass_context=True)
+async def battle(ctx):
+    user = ctx.author
+    message = ctx.message
+    others = message.mentions
+    mbed = discord.Embed (
+        description = others[0].mention + ' Click :white_check_mark: to accept and :o2: to decline. \
+            \n \n Competitors will compete in five rounds to see who can respond with the correct answer\
+            in the shortest amount of time. Best out of three. Winner will receive the **ultimate** bragging\
+            rights. Are YOU up for the battle?', # display user stats
+        color = 12745742 # DARK GOLD
+    )
+    mbed.set_author(name=user.name + ' challenges ' + others[0].name + ' to a math battle!', icon_url=user.avatar_url)
+    message = await ctx.send(embed = mbed)
+    for emoji in EMOJI_CHALLENGE:
+        await message.add_reaction(emoji)
+
+# ANSWERING PROBLEMS COMMAND
+def answerEmbedCorrect(user, answer):
+    msg = 'Your answer is correct! You earned ' # if quest, add comments
+    mbed = discord.Embed (
+        description = 'Your answer is correct! You earned ' + ' xp.', # experience amount depending on challenge (10) / quest (50)
+        color = 3066993 # GREEN
+    )
+    mbed.set_author(name=user.name + ' answered + ' + answer + '!', icon_url=user.avatar_url)
+    # process level increases
+
+def answerEmbedWrong():
+    mbed = discord.Embed (
+        
+    )
+
+@client.command(pass_context=True)
+async def answer(ctx):
+    # check if there is pending challenge
+    user = ctx.author
+    message = ctx.message
+    text = message.content
+    answer = ''; # retrieve from DB
+    if text == answer:
+        await message.edit(embed = answerEmbedCorrect(user, answer))
+    else:
+        await message.edit(embed = answerEmbedWrong(user, answer))
 
 client.run(TOKEN)
 
