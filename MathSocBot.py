@@ -29,10 +29,9 @@ async def on_ready():
 def getUserLevel(user):
     with pyodbc.connect(DRIVER) as conn:
         with conn.cursor() as cursor:
-            cnt = cursor.execute("select count(*) as cnt from mathData where username = '" + user + "'").fetchone().cnt
+            cnt = cursor.execute("select count(*) as cnt from mathData where username = '" + user.name + "'").fetchone().cnt
             if cnt == 0:  # user exists, update
-                cursor.execute("insert into vibeScores (username, xpLevel, xpCount, activityStatus) Values ('" + user + \
-                    ", 0, 0, 'nothing'" + "');")
+                cursor.execute("insert into vibeScores (username, xpLevel, xpCount, activityStatus) Values ('" + str(user) + ", 0, 0, 'nothing'" + "');")
                 cursor.commit() 
                 return False
             return True
@@ -41,15 +40,11 @@ def getUserLevel(user):
 async def level(ctx):
     user = ctx.author
 
-
 def checkUserExist(user):
     with pyodbc.connect(DRIVER) as conn:
         with conn.cursor() as cursor:
             cnt = cursor.execute("select count(*) as cnt from mathData where username = '" + user + "'").fetchone().cnt
-            if cnt == 0:  # user exists, update
-                cursor.execute("insert into vibeScores (username, xpLevel, xpCount, activityStatus) Values ('" + user + \
-                    ", 0, 0, 'none'" + "');")
-                cursor.commit() 
+            if cnt == 0:  
                 return False
             return True
 
@@ -60,6 +55,13 @@ def userNotExistEmbed(ctx):
     )
     mbed.set_author(name='Hello ' + ctx.author.name + '. You are not registered yet!')
     return mbed
+
+def createUserDB(ctx):
+    user = ctx.author
+    with pyodbc.connect(DRIVER) as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("insert into mathData (username, xpLevel, xpCount, activityStatus) Values ('" + str(user) + "', 0, 0, 'none');")
+            cursor.commit() 
 
 def registerEmbed(ctx):
     mbed = discord.Embed (
@@ -83,6 +85,7 @@ def registerAcceptEmbed(ctx):
         color = 3066993 # GREEN
     )
     mbed.set_author(name='Thank you for accepting ' + ctx.author.name + '!', icon_url=ctx.author.avatar_url)
+    
     return mbed
 
 @client.command(pass_context=True)
@@ -99,14 +102,15 @@ def questStoreAnswer(user, answer):
             if cnt > 0:  # user exists, update
                 cursor.execute("update mathData set answer = '" + str(answer) + "' where username = '" + str(user) + "'")
             else:
-                cursor.execute("insert into vibeScores (username, recent, average, vibeCount) Values ('" + str(name) + "', '" + str(score) + "', '" + str(score) + "', '1');")
+                cursor.execute("insert into mathData (username, recent, average, vibeCount) Values ('" + str(user) + "', '" + str(user) + "', '" + str(user) + "', '1');")
             cursor.commit()
 
 @client.command(pass_context=True)
 async def quest(ctx):
     user = ctx.author
-    if not checkUserExist(user.name):
-        userNotExistEmbed(user)
+    if not checkUserExist(user):
+        await ctx.send(embed = userNotExistEmbed(ctx))
+        return
     mbed = discord.Embed (
         description = 'Here is your daily quest...',
         color = 10181046
@@ -221,6 +225,10 @@ async def answer(ctx):
         await message.edit(embed = answerEmbedCorrect(user, answer))
     else:
         await message.edit(embed = answerEmbedWrong(user, answer))
+
+@client.command(pass_context=True)
+async def test(ctx):
+    await ctx.send(ctx.author.name + '#' + ctx.author.discriminator)
 
 client.run(TOKEN)
 
