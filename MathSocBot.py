@@ -26,6 +26,17 @@ async def on_ready():
     await general_channel.send(embed = mbed)
 
 # CHECK USER XP LEVEL COMMAND
+def getUserLevel(user):
+    with pyodbc.connect(DRIVER) as conn:
+        with conn.cursor() as cursor:
+            cnt = cursor.execute("select count(*) as cnt from mathData where username = '" + user + "'").fetchone().cnt
+            if cnt == 0:  # user exists, update
+                cursor.execute("insert into vibeScores (username, xpLevel, xpCount, activityStatus) Values ('" + user + \
+                    ", 0, 0, 'nothing'" + "');")
+                cursor.commit() 
+                return False
+            return True
+
 @client.command(pass_context=True) 
 async def level(ctx):
     user = ctx.author
@@ -37,27 +48,48 @@ def checkUserExist(user):
             cnt = cursor.execute("select count(*) as cnt from mathData where username = '" + user + "'").fetchone().cnt
             if cnt == 0:  # user exists, update
                 cursor.execute("insert into vibeScores (username, xpLevel, xpCount, activityStatus) Values ('" + user + \
-                    ", 0, 0, 'nothing'" + "');")
+                    ", 0, 0, 'none'" + "');")
                 cursor.commit() 
                 return False
             return True
 
-def userNotExistEmbed(user):
+def userNotExistEmbed(ctx):
     mbed = discord.Embed (
-        description = 'Please register with the bot before using it. To do this, use the command `+register`.'
+        description = 'Please register with the bot before using it. To do this, use the command `+register`.',
+        color = 15158332 # RED 
     )
+    mbed.set_author(name='Hello ' + ctx.author.name + '. You are not registered yet!')
+    return mbed
 
-@client.command(pass_context=True)
-async def register(ctx):
-    user = ctx.author
+def registerEmbed(ctx):
     mbed = discord.Embed (
         description = '**Below are the terms and agreements for MathSoc Bot:**\n\n \
             —> I will not spam commands that I will not use.\n \
             —> I will not purposely try commands that do not exist. Please see `+help` for a list of commands.\n \
-            —> I will be respectful to everyone in this server, including the bot (no roasting, creator-san will be sad :3).\n\n\
+            —> I will be respectful to everyone in this server, including the bot (no roasting, creator-san will be sad :3).\n\
+            —> I will be mindful of others using the bot and share this resource (yea, that means no hogging).\n\n\
             **Please take note of:**\n\
-            —> This bot is unprofessionally made so there are probably bugs, please use `+'
+            —> This bot is unprofessionally made so there are probably bugs and typos; use `+report bug` or `+report typos`, respectively.\n\
+            —> There are some formating requirements when answering problems. Your answer will not be deemed correct if it does not follow those requirements.\n\
+            —> If there are any other issues, please notify the creator by using `+creator <message>`. You will be contacted when creator-san is available.\n\n\
+            **React to this message with :ballot_box_with_check:. You will be automatically registered once you accept to the above terms.**',
+        color = 16776960 # YELLOW
     )
+    mbed.set_author(name=ctx.author.name + '\'s Registration', icon_url=ctx.author.avatar_url)
+    return mbed
+
+def registerAcceptEmbed(ctx):
+    mbed = discord.Embed (
+        color = 3066993 # GREEN
+    )
+    mbed.set_author(name='Thank you for accepting ' + ctx.author.name + '!', icon_url=ctx.author.avatar_url)
+    return mbed
+
+@client.command(pass_context=True)
+async def register(ctx):
+    user = ctx.author
+    message = await ctx.send(embed = registerEmbed(ctx))
+    await message.add_reaction('\U00002611') # :ballot_box_with_check:
 
 # DAILY QUEST COMMAND
 def questStoreAnswer(user, answer):
@@ -144,12 +176,13 @@ async def on_reaction_add(reaction, user):
         return
     if reaction.emoji == '\U00002705': # white_check_mark
         await message.edit(embed = acceptBattle(user, author))
+    elif reaction.emoji == '\U00002611': # ballot_box_with_check
+        await message.edit(embed = registerAcceptEmbed())
 
 @client.command(pass_context=True)
 async def battle(ctx):
     user = ctx.author
-    message = ctx.message
-    others = message.mentions
+    others = ctx.message.mentions
     mbed = discord.Embed (
         description = others[0].mention + ' Click :white_check_mark: to accept and :o2: to decline. \
             \n \n Competitors will compete in five rounds to see who can respond with the correct answer\
