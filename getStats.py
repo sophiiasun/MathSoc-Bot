@@ -11,11 +11,6 @@ def getUserLevel(user):
     name = user.name + '#' + user.discriminator
     with pyodbc.connect(DRIVER) as conn:
         with conn.cursor() as cursor:
-            cnt = cursor.execute("select count(*) as cnt from mathData where username = '" + name + "'").fetchone().cnt
-            if cnt == 0:  # user exists, update
-                cursor.execute("insert into vibeScores (username, xpLevel, xpCount, activityStatus) Values ('" + name + ", 0, 0, 'none'" + "');")
-                cursor.commit() 
-                return False
             lvl = cursor.execute("select xpLevel from mathData where username = '" + name + "'").fetchone().xpLevel
             xp = cursor.execute("select xpCount from mathData where username = '" + name + "'").fetchone().xpCount
             return [lvl, xp]

@@ -4,20 +4,28 @@ import discord
 from discord.utils import get
 from discord.ext import commands
 
+from getStats import *
+
 DRIVER = config('DRIVER')
 
 
 # QUEST ======================================================================================================================================
 
-def questStoreAnswer(user, answer):
+def storeAnswer(user, answer, type):
+    name = user.name + '#' + user.discriminator
     with pyodbc.connect(DRIVER) as conn:
         with conn.cursor() as cursor:
-            cnt = cursor.execute("select count(*) as cnt from mathData where username = '" + str(user) + "'").fetchone().cnt
-            if cnt > 0:  # user exists, update
-                cursor.execute("update mathData set answer = '" + str(answer) + "' where username = '" + str(user) + "'")
-            else:
-                cursor.execute("insert into mathData (username, recent, average, vibeCount) Values ('" + str(user) + "', '" + str(user) + "', '" + str(user) + "', '1');")
+            cursor.execute("update mathData set answer = '" + answer + "' where username = '" + name + "'")
+            cursor.execute("update mathData set activityStatus = '" + type + "' where username = '" + name + "'")
             cursor.commit()
+
+def getQuestEmbed(ctx):
+    user = ctx.author
+    mbed = discord.Embed (
+        description = 'Here is your daily quest...',
+        color = 10181046
+    )
+    mbed.set_author(name=user.name + ' is claiming their daily quest!', icon_url=user.avatar_url)
 
 # CHALLENGE ==================================================================================================================================
 
@@ -53,16 +61,28 @@ def getProblemType(user):
         with conn.cursor() as cursor:
             return cursor.execute("select activityStatus from mathData where username = '" + name + "'")
 
+def noPendingProblem(user):
+    mbed = discord.Embed(
+        description = ''
+    )
+
+def getProblemAnswer(user):
+    name = user.name + '#' + user.discriminator
+    with pyodbc.connect(DRIVER) as conn:
+        with conn.cursor() as cursor:
+            return cursor.execute("select answer from mathData where username ='" + name + "'").fetchone().answer
+
 def answerEmbedCorrect(user, answer, points):
-    msg = 'Your answer is correct! You earned ' # if quest, add comments
     mbed = discord.Embed (
-        description = 'Your answer is correct! You earned ' + ' xp.', # experience amount depending on challenge (10) / quest (50)
+        description = 'Your answer is correct! You earned ' + points + ' xp.', 
         color = 3066993 # GREEN
     )
     mbed.set_author(name=user.name + ' answered + ' + answer + '!', icon_url=user.avatar_url)
-    # process level increases
+    level = getUserLevel(user)
 
-def answerEmbedWrong():
+def answerEmbedWrong(user, answer):
     mbed = discord.Embed (
-        
+        description = 'Your answer is incorrect. Try again.',
+        color = 15158332 # RED
     )
+    mbed.set_author(name=user.name + ' answered + ' + answer + '!', icon_url=user.avatar_url)

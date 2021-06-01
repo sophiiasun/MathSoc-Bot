@@ -37,29 +37,28 @@ async def level(ctx):
 @client.command(pass_context=True)
 async def register(ctx):
     user = ctx.author
+    if checkUserExist(user) == True:
+        await ctx.send(embed = userAlreadyRegistered(ctx))
+        return
     message = await ctx.send(embed = registerEmbed(ctx))
     await message.add_reaction('\U00002611') # :ballot_box_with_check:
 
 # DAILY QUEST COMMAND
 
-
 @client.command(pass_context=True)
 async def quest(ctx):
     user = ctx.author
     if not checkUserExist(user):
-        await ctx.send(embed = userNotExistEmbed(ctx))
-        return
-    mbed = discord.Embed (
-        description = 'Here is your daily quest...',
-        color = 10181046
-    )
-    mbed.set_author(name=user.name + ' is claiming their daily quest!', icon_url=user.avatar_url)
+        return await ctx.send(embed = userNotExistEmbed(ctx))
+    mbed = getQuestEmbed(ctx)
     message = await ctx.send(embed = mbed)
-    time.sleep(3) # pause 3 seconds
+    time.sleep(2) 
     problem = CHALLENGES.getChallenge()
+    # update msg
     mbed.description = 'Here is your daily quest...\n\n' + problem[0]
     mbed.set_image(url=problem[1])
-    await message.edit(embed = mbed)
+    await message.edit(embed = mbed) 
+    storeAnswer(user, problem[2], 'quest')
 
 # CHALLENGE PROBLEMS COMMAND
 
@@ -111,10 +110,10 @@ async def battle(ctx):
 async def answer(ctx):
     user = ctx.author
     message = ctx.message
-    status = getProblemType()
-    text = message.content
-    answer = ''; # retrieve from DB
-    if text == answer:
+    status = getProblemType(user)
+    if not (status == 'quest' or status == 'challenge'): # no pending question
+        return await ctx.send(embed = noPendingProblem(user))
+    if message.content == getProblemAnswer(user):
         await message.edit(embed = answerEmbedCorrect(user, answer))
     else:
         await message.edit(embed = answerEmbedWrong(user, answer))
@@ -131,7 +130,8 @@ async def on_reaction_add(reaction, user):
     if reaction.emoji == '\U00002705': # white_check_mark
         await message.edit(embed = acceptBattle(user, author))
     elif reaction.emoji == '\U00002611': # ballot_box_with_check
-        await message.edit(embed = registerAcceptEmbed())
+        createUserDB(user)
+        await message.edit(embed = registerAcceptEmbed(user))
 
 @client.command(pass_context=True)
 async def test(ctx):

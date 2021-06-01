@@ -23,8 +23,7 @@ def userNotExistEmbed(ctx):
     mbed.set_author(name='Hello ' + ctx.author.name + '. You are not registered yet!')
     return mbed
 
-def createUserDB(ctx):
-    user = ctx.author
+def createUserDB(user):
     with pyodbc.connect(DRIVER) as conn:
         with conn.cursor() as cursor:
             cursor.execute("insert into mathData (username, xpLevel, xpCount, activityStatus) Values ('" + str(user) + "', 0, 0, 'none');")
@@ -47,9 +46,15 @@ def registerEmbed(ctx):
     mbed.set_author(name=ctx.author.name + '\'s Registration', icon_url=ctx.author.avatar_url)
     return mbed
 
-def registerAcceptEmbed(ctx):
+def registerAcceptEmbed(user):
     mbed = discord.Embed (
         color = 3066993 # GREEN
     )
-    mbed.set_author(name='Thank you for accepting ' + ctx.author.name + '!', icon_url=ctx.author.avatar_url)
+    mbed.set_author(name='Thank you for accepting, ' + user.name + '!', icon_url=user.avatar_url)
+    return mbed
+
+def userAlreadyRegistered(ctx):
+    user = ctx.author
+    mbed = discord.Embed( color = 15158332 ) # RED 
+    mbed.set_author(name=user.name + ' is already registered!', icon_url=user.avatar_url)
     return mbed
