@@ -59,6 +59,7 @@ async def quest(ctx):
     mbed.set_image(url=problem[1])
     await message.edit(embed = mbed) 
     storeAnswer(user, problem[2], 'quest')
+    setProblemType(user, 'quest')
 
 # CHALLENGE PROBLEMS COMMAND
 
@@ -107,15 +108,16 @@ async def battle(ctx):
 # ANSWERING PROBLEMS COMMAND
 
 @client.command(pass_context=True)
-async def answer(ctx):
+async def answer(ctx, *, msg):
     user = ctx.author
-    message = ctx.message
     status = getProblemType(user)
     if not (status == 'quest' or status == 'challenge'): # no pending question
+        await ctx.send('no quest')
         return await ctx.send(embed = noPendingProblem(user))
-    if message.content == getProblemAnswer(user):
+    answer = str(getProblemAnswer(user))
+    if str(msg) == answer:
         processCorrectAnswer(user)
-        await message.edit(embed = answerEmbedCorrect(user, answer))
+        await ctx.send(embed = answerEmbedCorrect(user, answer, '50'))
     # else:
     #     processWrongAnswer(user)
     #     await message.edit(embed = answerEmbedWrong(user, answer))

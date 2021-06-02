@@ -7,7 +7,7 @@ from discord.ext import commands
 from getStats import *
 
 DRIVER = config('DRIVER')
-LEVEL_XP_TOTAL = [0, 20, 20, 30, 30, 50, 50, 100, 100, 150, 150, 200, 200]
+LEVEL_XP_TOTAL = [70, 70, 100, 100, 150, 150, 250, 250]
 
 # QUEST ======================================================================================================================================
 
@@ -60,11 +60,11 @@ def getProblemType(user):
     name = user.name + '#' + user.discriminator
     with pyodbc.connect(DRIVER) as conn:
         with conn.cursor() as cursor:
-            return cursor.execute("select activityStatus from mathData where username = '" + name + "'")
+            return cursor.execute("select activityStatus from mathData where username = '" + name + "'").fetchone().activityStatus
 
 def noPendingProblem(user):
     mbed = discord.Embed(
-        description = ''
+        description = 'no pending problem'
     )
     return mbed
 
@@ -85,6 +85,13 @@ def levelUpEmbed(type):
         description = ''
     )
 
+def clearProblemDB(user):
+    name = user.name + '#' + user.discriminator
+    with pyodbc.connect(DRIVER) as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("update mathData set activityStatus = 'none' where username = '" + name + "'")
+            cursor.commit()
+
 def processCorrectAnswer(user):
     name = user.name + '#' + user.discriminator
     xp = getPoints(getProblemType(user))
@@ -93,10 +100,11 @@ def processCorrectAnswer(user):
         with conn.cursor() as cursor:
             if lvl[1] + xp >= LEVEL_XP_TOTAL[lvl[0]]: # level up
                 cursor.execute("update mathData set xpLevel = xpLevel + 1 where username = '" + name + "'")
-                cursor.execute("update mathData set xpCount = (xpCount + '" + str(xp) + "') - '" + LEVEL_XP_TOTAL[lvl[0]] + "' where username = '" + name + "'")
+                cursor.execute("update mathData set xpCount = (xpCount + '" + str(xp) + "') - '" + str(LEVEL_XP_TOTAL[lvl[0]]) + "' where username = '" + name + "'")
             else:
                 cursor.execute("update mathData set xpCount = xpCount + '" + str(xp) + "' where username = '" + name + "'")
             cursor.commit()
+    clearProblemDB(user)
 
 # def processWrongAnswer(user):
     # THINK ABOUT WHAT I WANT TO HAPPEN WHEN USERS ANWER Q WRONG
@@ -114,4 +122,13 @@ def answerEmbedWrong(user, answer):
         description = 'Your answer is incorrect. Try again.',
         color = 15158332 # RED
     )
-    mbed.set_author(name=user.name + ' answered + ' + answer + '!', icon_url=user.avatar_url)
+    mbed.set_author(name=user.name + ' answered ' + answer + '!', icon_url=user.avatar_url)
+    return mbed
+
+
+
+def setProblemType(user, type):
+    with pyodbc.connect(DRIVER) as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("update mathData set activityStatus = '" + type + "'")
+            cursor.commit()
