@@ -26,6 +26,7 @@ def getQuestEmbed(ctx):
         color = 10181046
     )
     mbed.set_author(name=user.name + ' is claiming their daily quest!', icon_url=user.avatar_url)
+    return mbed
 
 # CHALLENGE ==================================================================================================================================
 
@@ -71,6 +72,13 @@ def getProblemAnswer(user):
     with pyodbc.connect(DRIVER) as conn:
         with conn.cursor() as cursor:
             return cursor.execute("select answer from mathData where username ='" + name + "'").fetchone().answer
+
+def processCorrectAnswer(user):
+    name = user.name + '#' + user.discriminator
+    type = getProblemType(user)
+    with pyodbc.connect(DRIVER) as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("update mathData set xpCount = '" + type + "' where username = '" + name + "'")
 
 def answerEmbedCorrect(user, answer, points):
     mbed = discord.Embed (

@@ -114,8 +114,10 @@ async def answer(ctx):
     if not (status == 'quest' or status == 'challenge'): # no pending question
         return await ctx.send(embed = noPendingProblem(user))
     if message.content == getProblemAnswer(user):
+        processCorrectAnswer(user)
         await message.edit(embed = answerEmbedCorrect(user, answer))
     else:
+        processWrongAnswer
         await message.edit(embed = answerEmbedWrong(user, answer))
 
 # PROCESS USER ADDING REACTIONS
