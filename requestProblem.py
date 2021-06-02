@@ -7,7 +7,7 @@ from discord.ext import commands
 from getStats import *
 
 DRIVER = config('DRIVER')
-
+LEVEL_XP_TOTAL = [0, 20, 20, 30, 30, 50, 50, 100, 100, 150, 150, 200, 200]
 
 # QUEST ======================================================================================================================================
 
@@ -66,6 +66,7 @@ def noPendingProblem(user):
     mbed = discord.Embed(
         description = ''
     )
+    return mbed
 
 def getProblemAnswer(user):
     name = user.name + '#' + user.discriminator
@@ -73,12 +74,32 @@ def getProblemAnswer(user):
         with conn.cursor() as cursor:
             return cursor.execute("select answer from mathData where username ='" + name + "'").fetchone().answer
 
+def getPoints(type):
+    if type == 'quest':
+        return 50
+    if type == 'challenge':
+        return 10
+
+def levelUpEmbed(type):
+    mbed = discord.Embed(
+        description = ''
+    )
+
 def processCorrectAnswer(user):
     name = user.name + '#' + user.discriminator
-    type = getProblemType(user)
+    xp = getPoints(getProblemType(user))
+    lvl = getUserLevel(user)
     with pyodbc.connect(DRIVER) as conn:
         with conn.cursor() as cursor:
-            cursor.execute("update mathData set xpCount = '" + type + "' where username = '" + name + "'")
+            if lvl[1] + xp >= LEVEL_XP_TOTAL[lvl[0]]: # level up
+                cursor.execute("update mathData set xpLevel = xpLevel + 1 where username = '" + name + "'")
+                cursor.execute("update mathData set xpCount = (xpCount + '" + str(xp) + "') - '" + LEVEL_XP_TOTAL[lvl[0]] + "' where username = '" + name + "'")
+            else:
+                cursor.execute("update mathData set xpCount = xpCount + '" + str(xp) + "' where username = '" + name + "'")
+            cursor.commit()
+
+# def processWrongAnswer(user):
+    # THINK ABOUT WHAT I WANT TO HAPPEN WHEN USERS ANWER Q WRONG
 
 def answerEmbedCorrect(user, answer, points):
     mbed = discord.Embed (
@@ -86,7 +107,7 @@ def answerEmbedCorrect(user, answer, points):
         color = 3066993 # GREEN
     )
     mbed.set_author(name=user.name + ' answered + ' + answer + '!', icon_url=user.avatar_url)
-    level = getUserLevel(user)
+    return mbed
 
 def answerEmbedWrong(user, answer):
     mbed = discord.Embed (

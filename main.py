@@ -116,9 +116,9 @@ async def answer(ctx):
     if message.content == getProblemAnswer(user):
         processCorrectAnswer(user)
         await message.edit(embed = answerEmbedCorrect(user, answer))
-    else:
-        processWrongAnswer
-        await message.edit(embed = answerEmbedWrong(user, answer))
+    # else:
+    #     processWrongAnswer(user)
+    #     await message.edit(embed = answerEmbedWrong(user, answer))
 
 # PROCESS USER ADDING REACTIONS
 
