@@ -80,10 +80,15 @@ def getPoints(type):
     if type == 'challenge':
         return 10
 
-def levelUpEmbed(type):
+def levelUpEmbed(user):
+    lvl = getUserLevel(user)
+    name = user.name + '#' + user.discriminator
     mbed = discord.Embed(
-        description = ''
+        description = 'Your are now level ' + str(lvl[0]) + ' with ' + str(lvl[1]) + '/' + str(LEVEL_XP_TOTAL[lvl[0]]) + ' xp.',
+        color = 3447003 # BLUE
     )
+    mbed.set_author(name=name + ' has leveled up!', icon_url=user.avatar_url)
+    return mbed
 
 def clearProblemDB(user):
     name = user.name + '#' + user.discriminator
@@ -96,15 +101,18 @@ def processCorrectAnswer(user):
     name = user.name + '#' + user.discriminator
     xp = getPoints(getProblemType(user))
     lvl = getUserLevel(user)
+    clearProblemDB(user)
     with pyodbc.connect(DRIVER) as conn:
         with conn.cursor() as cursor:
             if lvl[1] + xp >= LEVEL_XP_TOTAL[lvl[0]]: # level up
                 cursor.execute("update mathData set xpLevel = xpLevel + 1 where username = '" + name + "'")
                 cursor.execute("update mathData set xpCount = (xpCount + '" + str(xp) + "') - '" + str(LEVEL_XP_TOTAL[lvl[0]]) + "' where username = '" + name + "'")
+                cursor.commit()
+                return levelUpEmbed(user)
             else:
                 cursor.execute("update mathData set xpCount = xpCount + '" + str(xp) + "' where username = '" + name + "'")
-            cursor.commit()
-    clearProblemDB(user)
+                cursor.commit()
+                return None
 
 # def processWrongAnswer(user):
     # THINK ABOUT WHAT I WANT TO HAPPEN WHEN USERS ANWER Q WRONG

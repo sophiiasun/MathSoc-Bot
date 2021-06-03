@@ -31,8 +31,7 @@ async def on_ready():
 
 @client.command(pass_context=True) 
 async def level(ctx):
-    user = ctx.author
-    lvl = getUserLevel(user)
+    await ctx.send(embed = getUserLevelEmbed(ctx))
 
 @client.command(pass_context=True)
 async def register(ctx):
@@ -116,8 +115,10 @@ async def answer(ctx, *, msg):
         return await ctx.send(embed = noPendingProblem(user))
     answer = str(getProblemAnswer(user))
     if str(msg) == answer:
-        processCorrectAnswer(user)
         await ctx.send(embed = answerEmbedCorrect(user, answer, '50'))
+        mbed = processCorrectAnswer(user)
+        if not (mbed == None):
+            await ctx.send(embed = mbed)
     # else:
     #     processWrongAnswer(user)
     #     await message.edit(embed = answerEmbedWrong(user, answer))
