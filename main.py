@@ -49,28 +49,27 @@ async def quest(ctx):
     user = ctx.author
     if not checkUserExist(user):
         return await ctx.send(embed = userNotExistEmbed(ctx))
-    mbed = getQuestEmbed(ctx)
+    mbed = displayQuest(ctx)
     message = await ctx.send(embed = mbed)
     time.sleep(2) 
     problem = CHALLENGES.getChallenge()
-    # update msg
-    mbed.description = 'Here is your daily quest...\n\n' + problem[0]
-    mbed.set_image(url=problem[1])
-    await message.edit(embed = mbed) 
-    storeAnswer(user, problem[2], 'quest')
-    setProblemType(user, 'quest')
+    await message.edit(embed = editQuestEmbed(problem, mbed)) 
+    storeProblem(user, problem[3], 'quest')
 
 # CHALLENGE PROBLEMS COMMAND
 
 @client.command(pass_context=True)
 async def challenge(ctx):
-    # check if there is still pending 
-    messageUser = ctx.message.content.split(' ')
-    mbed = displayChallenge(ctx, messageUser[1])
+    user = ctx.author
+    if not checkUserExist(user):
+        return await ctx.send(embed = userNotExistEmbed(ctx))
+    type = ctx.message.content.split(' ')[1]
+    mbed = displayChallenge(ctx, type)
     message = await ctx.send(embed = mbed)
-    time.sleep(1) # pause 3 seconds
-    mbed = editChallengeEmbed(CHALLENGES.getChallenge(messageUser[1]), mbed)
-    await message.edit(embed = mbed)
+    time.sleep(2) # pause 3 seconds
+    problem = CHALLENGES.getChallenge(type)
+    await message.edit(embed = editChallengeEmbed(problem, mbed))
+    storeProblem(user, problem[3], 'challenge')
 
 # HELP COMMAND
 @client.command(pass_context=True)

@@ -11,36 +11,34 @@ LEVEL_XP_TOTAL = [70, 70, 100, 100, 150, 150, 250, 250]
 
 # QUEST ======================================================================================================================================
 
-def storeAnswer(user, answer, type):
-    name = user.name + '#' + user.discriminator
-    with pyodbc.connect(DRIVER) as conn:
-        with conn.cursor() as cursor:
-            cursor.execute("update mathData set answer = '" + answer + "' where username = '" + name + "'")
-            cursor.execute("update mathData set activityStatus = '" + type + "' where username = '" + name + "'")
-            cursor.commit()
-
-def getQuestEmbed(ctx):
+def displayQuest(ctx):
     user = ctx.author
     mbed = discord.Embed (
         description = 'Here is your daily quest...',
-        color = 10181046
+        color = 10181046 # PURPLE
     )
     mbed.set_author(name=user.name + ' is claiming their daily quest!', icon_url=user.avatar_url)
     return mbed
 
+def editQuestEmbed(problem, mbed):
+    mbed.description = problem[0] + '\n\n**Problem Credits:** ' + problem[3]
+    mbed.set_image(url=problem[1])
+    return mbed
+
 # CHALLENGE ==================================================================================================================================
 
-def displayChallenge(ctx, message):
+def displayChallenge(ctx, type):
     user = ctx.author
     mbed = discord.Embed (
-        description = 'Presenting a ' + str(message) + ' problem for the math-hungry you...',
-        color = 10181046
+        description = 'Presenting a ' + str(type) + ' problem for the math-hungry you...',
+        color = 10181046 # PURPLE
     )
     mbed.set_author(name=user.name + ' is seeking for a challenge!', icon_url=user.avatar_url)
     return mbed
 
 def editChallengeEmbed(problem, mbed):
     mbed.description = problem[0]
+    mbed.add_field(name='Problem Credits:', value=problem[3])
     mbed.set_image(url=problem[1])
     return mbed
 
@@ -133,10 +131,10 @@ def answerEmbedWrong(user, answer):
     mbed.set_author(name=user.name + ' answered ' + answer + '!', icon_url=user.avatar_url)
     return mbed
 
-
-
-def setProblemType(user, type):
+def storeProblem(user, answer, type):
+    name = user.name + '#' + user.discriminator
     with pyodbc.connect(DRIVER) as conn:
         with conn.cursor() as cursor:
-            cursor.execute("update mathData set activityStatus = '" + type + "'")
+            cursor.execute("update mathData set activityStatus = '" + type + "' where username = '" + name + "'")
+            cursor.execute("update mathData set answer = '" + answer + "' where username = '" + name + "'")
             cursor.commit()
