@@ -9,6 +9,9 @@ from getStats import *
 DRIVER = config('DRIVER')
 LEVEL_XP_TOTAL = [70, 70, 100, 100, 150, 150, 250, 250]
 
+def getName(user):
+    return user.name + '#' + user.discriminator
+
 # QUEST ======================================================================================================================================
 
 def displayQuest(ctx):
@@ -21,7 +24,8 @@ def displayQuest(ctx):
     return mbed
 
 def editQuestEmbed(problem, mbed):
-    mbed.description = problem[0] + '\n\n**Problem Credits:** ' + problem[3]
+    mbed.title = 'Problem Credits: ' + problem[3]
+    mbed.description = problem[0]
     mbed.set_image(url=problem[1])
     return mbed
 
@@ -37,8 +41,8 @@ def displayChallenge(ctx, type):
     return mbed
 
 def editChallengeEmbed(problem, mbed):
+    mbed.title = 'Problem Credits: ' + problem[3]
     mbed.description = problem[0]
-    mbed.add_field(name='Problem Credits:', value=problem[3])
     mbed.set_image(url=problem[1])
     return mbed
 
@@ -55,7 +59,7 @@ def acceptBattle(user, author, msg):
 # ANSWER QUESTION ============================================================================================================================
 
 def getProblemType(user):
-    name = user.name + '#' + user.discriminator
+    name = getName(user)
     with pyodbc.connect(DRIVER) as conn:
         with conn.cursor() as cursor:
             return cursor.execute("select activityStatus from mathData where username = '" + name + "'").fetchone().activityStatus
@@ -67,7 +71,7 @@ def noPendingProblem(user):
     return mbed
 
 def getProblemAnswer(user):
-    name = user.name + '#' + user.discriminator
+    name = getName(user)
     with pyodbc.connect(DRIVER) as conn:
         with conn.cursor() as cursor:
             return cursor.execute("select answer from mathData where username ='" + name + "'").fetchone().answer
@@ -78,26 +82,22 @@ def getPoints(type):
     if type == 'challenge':
         return 10
 
-def levelUpEmbed(user):
-    lvl = getUserLevel(user)
-    name = user.name + '#' + user.discriminator
-    mbed = discord.Embed(
-        description = 'Your are now level ' + str(lvl[0]) + ' with ' + str(lvl[1]) + '/' + str(LEVEL_XP_TOTAL[lvl[0]]) + ' xp.',
-        color = 3447003 # BLUE
-    )
-    mbed.set_author(name=name + ' has leveled up!', icon_url=user.avatar_url)
-    return mbed
-
 def clearProblemDB(user):
-    name = user.name + '#' + user.discriminator
+    name = getName(user)
     with pyodbc.connect(DRIVER) as conn:
         with conn.cursor() as cursor:
             cursor.execute("update mathData set activityStatus = 'none' where username = '" + name + "'")
             cursor.commit()
 
+def getMultiplier(user):
+    name = getName(user)
+    with pyodbc.connect(DRIVER) as conn:
+        with conn.cursor() as cursor:
+            return cursor.execute("select multiplier from mathData where username = '" + name + "'").fetchone().multiplier
+
 def processCorrectAnswer(user):
-    name = user.name + '#' + user.discriminator
-    xp = getPoints(getProblemType(user))
+    name = getName(user)
+    xp = getPoints(getProblemType(user)) * getMultiplier(user)
     lvl = getUserLevel(user)
     clearProblemDB(user)
     with pyodbc.connect(DRIVER) as conn:
@@ -113,17 +113,16 @@ def processCorrectAnswer(user):
                 return None
 
 # def processWrongAnswer(user):
-    # THINK ABOUT WHAT I WANT TO HAPPEN WHEN USERS ANWER Q WRONG
 
-def answerEmbedCorrect(user, answer, points):
+
+def correctAnswerEmbed(user, answer, points):
     mbed = discord.Embed (
-        description = 'Your answer is correct! You earned ' + points + ' xp.', 
+        title = Emoji.white_check_mark + ' **|** ' + user.name + '\'s anwer is correct! You earned ' + str(points*getMultiplier(user)) + ' xp.', 
         color = 3066993 # GREEN
     )
-    mbed.set_author(name=user.name + ' answered + ' + answer + '!', icon_url=user.avatar_url)
     return mbed
 
-def answerEmbedWrong(user, answer):
+def wrongAnswerEmbed(user, answer):
     mbed = discord.Embed (
         description = 'Your answer is incorrect. Try again.',
         color = 15158332 # RED
@@ -132,9 +131,10 @@ def answerEmbedWrong(user, answer):
     return mbed
 
 def storeProblem(user, answer, type):
-    name = user.name + '#' + user.discriminator
+    name = getName(user)
     with pyodbc.connect(DRIVER) as conn:
         with conn.cursor() as cursor:
             cursor.execute("update mathData set activityStatus = '" + type + "' where username = '" + name + "'")
             cursor.execute("update mathData set answer = '" + answer + "' where username = '" + name + "'")
+            cursor.execute("update mathData set multiplier = '2' where username = '" + name + "'")
             cursor.commit()

@@ -10,11 +10,11 @@ from mathChallenges import *
 from getStats import *
 from requestProblem import *
 from registration import *
+from emoji import Emoji
 
 client = commands.Bot(command_prefix = '+', help_command = None)
 TOKEN = config('TOKEN')
 DRIVER = config('DRIVER')
-EMOJI_CHALLENGE = ['\U00002705', '\U0001F17E'] # white_check_mark, o2
 
 CHALLENGES = Challenges()
 
@@ -40,7 +40,7 @@ async def register(ctx):
         await ctx.send(embed = userAlreadyRegistered(ctx))
         return
     message = await ctx.send(embed = registerEmbed(ctx))
-    await message.add_reaction('\U00002611') # :ballot_box_with_check:
+    await message.add_reaction(Emoji.ballot_box_with_check) # :ballot_box_with_check:
 
 # DAILY QUEST COMMAND
 
@@ -54,7 +54,7 @@ async def quest(ctx):
     time.sleep(2) 
     problem = CHALLENGES.getChallenge()
     await message.edit(embed = editQuestEmbed(problem, mbed)) 
-    storeProblem(user, problem[3], 'quest')
+    storeProblem(user, problem[2], 'quest')
 
 # CHALLENGE PROBLEMS COMMAND
 
@@ -69,7 +69,7 @@ async def challenge(ctx):
     time.sleep(2) # pause 3 seconds
     problem = CHALLENGES.getChallenge(type)
     await message.edit(embed = editChallengeEmbed(problem, mbed))
-    storeProblem(user, problem[3], 'challenge')
+    storeProblem(user, problem[2], 'challenge')
 
 # HELP COMMAND
 @client.command(pass_context=True)
@@ -100,8 +100,8 @@ async def battle(ctx):
     )
     mbed.set_author(name=user.name + ' challenges ' + others[0].name + ' to a math battle!', icon_url=user.avatar_url)
     message = await ctx.send(embed = mbed)
-    for emoji in EMOJI_CHALLENGE:
-        await message.add_reaction(emoji)
+    await message.add_reaction(Emoji.white_check_mark)
+    await message.add_reaction(Emoji.o2)
 
 # ANSWERING PROBLEMS COMMAND
 
@@ -114,7 +114,7 @@ async def answer(ctx, *, msg):
         return await ctx.send(embed = noPendingProblem(user))
     answer = str(getProblemAnswer(user))
     if str(msg) == answer:
-        await ctx.send(embed = answerEmbedCorrect(user, answer, '50'))
+        await ctx.send(embed = correctAnswerEmbed(user, answer, getPoints(status)))
         mbed = processCorrectAnswer(user)
         if not (mbed == None):
             await ctx.send(embed = mbed)
@@ -127,13 +127,12 @@ async def answer(ctx, *, msg):
 @client.event
 async def on_reaction_add(reaction, user):
     message = reaction.message
-    channel = message.channel
     author = message.author
     if user.bot:
         return
-    if reaction.emoji == '\U00002705': # white_check_mark
+    if reaction.emoji == Emoji.white_check_mark: 
         await message.edit(embed = acceptBattle(user, author))
-    elif reaction.emoji == '\U00002611': # ballot_box_with_check
+    elif reaction.emoji == Emoji.ballot_box_with_check: 
         createUserDB(user)
         await message.edit(embed = registerAcceptEmbed(user))
 
