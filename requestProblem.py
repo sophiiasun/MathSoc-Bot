@@ -22,6 +22,7 @@ def displayQuest(ctx, problem):
         color = 10181046 # PURPLE
     )
     mbed.set_image(url=problem[1])
+    mbed.set_author(name=user.name, icon_url=user.avatar_url)
     return mbed
 
 # CHALLENGE ==================================================================================================================================
@@ -34,16 +35,19 @@ def displayChallenge(ctx, problem):
         color = 10181046 # PURPLE
     )
     mbed.set_image(url=problem[1])
+    mbed.set_author(name=user.name, icon_url=user.avatar_url)
     return mbed
 
 # BATTLE =====================================================================================================================================
 
-def acceptBattle(user, author, msg):
+def acceptBattle(ctx):
+    user = ctx.author
     mbed = discord.Embed (
         description = user.name + ' has accepted the battle! Let the matches begin! Best three out of five rounds.',
         color = 15844367 # GOLD
     )
-    mbed.set_author(name=author.name + ' challenges ' + user.name + ' to a math battle!', icon_url=author.avatar_url)
+    mbed.set_image(url=problem[1])
+    mbed.set_author(name=user.name + ' challenges ' + user.name + ' to a math battle!', icon_url=user.avatar_url)
     return mbed
 
 # ANSWER QUESTION ============================================================================================================================
@@ -56,7 +60,7 @@ def getProblemType(user):
 
 def noPendingProblem(user):
     mbed = discord.Embed(
-        description = 'no pending problem'
+        description = 'No pending problem.'
     )
     return mbed
 
