@@ -49,11 +49,9 @@ async def quest(ctx):
     user = ctx.author
     if not checkUserExist(user):
         return await ctx.send(embed = userNotExistEmbed(ctx))
-    mbed = displayQuest(ctx)
+    problem = CHALLENGES.getChallenge('random')
+    mbed = displayQuest(ctx, problem)
     message = await ctx.send(embed = mbed)
-    time.sleep(2) 
-    problem = CHALLENGES.getChallenge()
-    await message.edit(embed = editQuestEmbed(problem, mbed)) 
     storeProblem(user, problem[2], 'quest')
 
 # CHALLENGE PROBLEMS COMMAND
@@ -64,11 +62,9 @@ async def challenge(ctx):
     if not checkUserExist(user):
         return await ctx.send(embed = userNotExistEmbed(ctx))
     type = ctx.message.content.split(' ')[1]
-    mbed = displayChallenge(ctx, type)
-    message = await ctx.send(embed = mbed)
-    time.sleep(2) # pause 3 seconds
     problem = CHALLENGES.getChallenge(type)
-    await message.edit(embed = editChallengeEmbed(problem, mbed))
+    mbed = displayChallenge(ctx, problem)
+    message = await ctx.send(embed = mbed)
     storeProblem(user, problem[2], 'challenge')
 
 # HELP COMMAND

@@ -14,35 +14,25 @@ def getName(user):
 
 # QUEST ======================================================================================================================================
 
-def displayQuest(ctx):
+def displayQuest(ctx, problem):
     user = ctx.author
     mbed = discord.Embed (
-        description = 'Here is your daily quest...',
+        title = 'Problem Credits: ' + problem[3],
+        description = problem[0],
         color = 10181046 # PURPLE
     )
-    mbed.set_author(name=user.name + ' is claiming their daily quest!', icon_url=user.avatar_url)
-    return mbed
-
-def editQuestEmbed(problem, mbed):
-    mbed.title = 'Problem Credits: ' + problem[3]
-    mbed.description = problem[0]
     mbed.set_image(url=problem[1])
     return mbed
 
 # CHALLENGE ==================================================================================================================================
 
-def displayChallenge(ctx, type):
+def displayChallenge(ctx, problem):
     user = ctx.author
     mbed = discord.Embed (
-        description = 'Presenting a ' + str(type) + ' problem for the math-hungry you...',
+        title = 'Problem Credits: ' + problem[3],
+        description = problem[0],
         color = 10181046 # PURPLE
     )
-    mbed.set_author(name=user.name + ' is seeking for a challenge!', icon_url=user.avatar_url)
-    return mbed
-
-def editChallengeEmbed(problem, mbed):
-    mbed.title = 'Problem Credits: ' + problem[3]
-    mbed.description = problem[0]
     mbed.set_image(url=problem[1])
     return mbed
 

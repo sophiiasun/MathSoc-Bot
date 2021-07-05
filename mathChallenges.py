@@ -35,7 +35,9 @@ class Challenges:
             return 1
         return 2
 
-    def getChallenge(self, choice = 'rand'): # -1 --> rand, 0 --> geo, etc.
+    def getChallenge(self, choice): # -1 --> rand, 0 --> geo, etc.
         category = self.getCategory(choice)
+        if category == -1:
+            category = random.randint(0, 2)
         problem = random.randint(0, len(self.all[category])-1)
         return self.all[category][problem]
