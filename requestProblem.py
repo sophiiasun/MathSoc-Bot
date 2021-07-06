@@ -12,57 +12,11 @@ LEVEL_XP_TOTAL = [70, 70, 100, 100, 150, 150, 250, 250]
 def getName(user):
     return user.name + '#' + user.discriminator
 
-# QUEST ======================================================================================================================================
-
-def displayQuest(ctx, problem):
-    user = ctx.author
-    mbed = discord.Embed (
-        title = 'Problem Credits: ' + problem[3],
-        description = problem[0],
-        color = 10181046 # PURPLE
-    )
-    mbed.set_image(url=problem[1])
-    mbed.set_author(name=user.name, icon_url=user.avatar_url)
-    return mbed
-
-# CHALLENGE ==================================================================================================================================
-
-def displayChallenge(ctx, problem):
-    user = ctx.author
-    mbed = discord.Embed (
-        title = 'Problem Credits: ' + problem[3],
-        description = problem[0],
-        color = 10181046 # PURPLE
-    )
-    mbed.set_image(url=problem[1])
-    mbed.set_author(name=user.name, icon_url=user.avatar_url)
-    return mbed
-
-# BATTLE =====================================================================================================================================
-
-def acceptBattle(ctx):
-    user = ctx.author
-    mbed = discord.Embed (
-        description = user.name + ' has accepted the battle! Let the matches begin! Best three out of five rounds.',
-        color = 15844367 # GOLD
-    )
-    mbed.set_image(url=problem[1])
-    mbed.set_author(name=user.name + ' challenges ' + user.name + ' to a math battle!', icon_url=user.avatar_url)
-    return mbed
-
-# ANSWER QUESTION ============================================================================================================================
-
 def getProblemType(user):
     name = getName(user)
     with pyodbc.connect(DRIVER) as conn:
         with conn.cursor() as cursor:
             return cursor.execute("select activityStatus from mathData where username = '" + name + "'").fetchone().activityStatus
-
-def noPendingProblem(user):
-    mbed = discord.Embed(
-        description = 'No pending problem.'
-    )
-    return mbed
 
 def getProblemAnswer(user):
     name = getName(user)
@@ -106,8 +60,51 @@ def processCorrectAnswer(user):
                 cursor.commit()
                 return None
 
-# def processWrongAnswer(user):
+def storeProblem(user, answer, type):
+    name = getName(user)
+    with pyodbc.connect(DRIVER) as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("update mathData set activityStatus = '" + type + "' where username = '" + name + "'")
+            cursor.execute("update mathData set answer = '" + answer + "' where username = '" + name + "'")
+            cursor.execute("update mathData set multiplier = '2' where username = '" + name + "'")
+            cursor.commit()
 
+def displayQuest(ctx, problem):
+    user = ctx.author
+    mbed = discord.Embed (
+        title = 'Problem Credits: ' + problem[3],
+        description = problem[0],
+        color = 10181046 # PURPLE
+    )
+    mbed.set_image(url=problem[1])
+    mbed.set_author(name=user.name, icon_url=user.avatar_url)
+    return mbed
+
+def displayChallenge(ctx, problem):
+    user = ctx.author
+    mbed = discord.Embed (
+        title = 'Problem Credits: ' + problem[3],
+        description = problem[0],
+        color = 10181046 # PURPLE
+    )
+    mbed.set_image(url=problem[1])
+    mbed.set_author(name=user.name, icon_url=user.avatar_url)
+    return mbed
+
+def acceptBattle(ctx):
+    user = ctx.author
+    mbed = discord.Embed (
+        description = user.name + ' has accepted the battle! Let the matches begin! Best three out of five rounds.',
+        color = 15844367 # GOLD
+    )
+    mbed.set_author(name=user.name + ' challenges ' + user.name + ' to a math battle!', icon_url=user.avatar_url)
+    return mbed
+
+def noPendingProblem(user):
+    mbed = discord.Embed(
+        description = 'No pending problem.'
+    )
+    return mbed
 
 def correctAnswerEmbed(user, answer, points):
     mbed = discord.Embed (
@@ -123,12 +120,3 @@ def wrongAnswerEmbed(user, answer):
     )
     mbed.set_author(name=user.name + ' answered ' + answer + '!', icon_url=user.avatar_url)
     return mbed
-
-def storeProblem(user, answer, type):
-    name = getName(user)
-    with pyodbc.connect(DRIVER) as conn:
-        with conn.cursor() as cursor:
-            cursor.execute("update mathData set activityStatus = '" + type + "' where username = '" + name + "'")
-            cursor.execute("update mathData set answer = '" + answer + "' where username = '" + name + "'")
-            cursor.execute("update mathData set multiplier = '2' where username = '" + name + "'")
-            cursor.commit()
